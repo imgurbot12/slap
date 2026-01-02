@@ -23,7 +23,7 @@ class Boolean implements Validator {
    * @param ?string $value
    */
   function validate($value): bool {
-    if ($value === null) return true;
+    if ($value === null || is_bool($value)) return true;
     if (in_array($value, B_TRUE)) return true;
     if (in_array($value, B_FALSE)) return true;
     return false;
@@ -34,7 +34,8 @@ class Boolean implements Validator {
    */
   function convert($value): mixed {
     if ($value === null || in_array($value, B_TRUE)) return true;
-    return false;
+    if (in_array($value, B_FALSE)) return false;
+    return boolval($value);
   }
 }
 ?>

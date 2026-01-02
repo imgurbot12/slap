@@ -1,6 +1,6 @@
 <?php
 /**
- * Slap Boolean Validator Implementation
+ * Slap String Validator Implementation
  *
  * @package   Imgurbot12/Slap
  * @category  Flags
@@ -15,19 +15,19 @@ use Imgurbot12\Slap\Validate\Validator;
 /**
  * @implements Validator<?string>
  */
-class Integer implements Validator {
+class Str implements Validator {
   /**
    * @param ?string $value
    */
   function validate($value): bool {
-    return $value === null || is_int($value) || ctype_digit($value);
+    return $value === null || is_string($value);
   }
 
   /**
    * @param ?string $value
    */
   function convert($value): mixed {
-    return intval($value);
+    return strval($value);
   }
 }
 ?>

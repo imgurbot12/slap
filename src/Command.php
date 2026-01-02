@@ -10,7 +10,10 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
+use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Flags\Flag;
+
+//TODO: validate against command/flag/argument name overlap
 
 /**
  *
@@ -19,7 +22,11 @@ class Command {
   /** primary name associated with the command */
   public string $name;
   /** usage description tied to command */
-  public string $usage;
+  public string $about;
+  /** @var array<string> command authors */
+  public array $authors;
+  /** command version */
+  public string  $version;
   /** @var array<Argument> arguments linked with the command */
   public array $args;
   /** @var array<Flag> flags linked with the command */
@@ -28,10 +35,9 @@ class Command {
   public array $commands;
   /** @var array<string> aliases also tied to the command */
   public array $aliases;
-  /** allow for command to be repeated */
-  public bool $repeat;
 
   /**
+   * @param ?array<string>   $authors
    * @param ?array<Argument> $args
    * @param ?array<Flag>     $flags
    * @param ?array<Command>  $commands
@@ -39,20 +45,56 @@ class Command {
    */
   function __construct(
     string  $name,
-    ?string $usage    = null,
+    string  $about    = '',
+    string  $version  = '0.1.0',
+    ?array  $authors  = null,
     ?array  $args     = null,
     ?array  $flags    = null,
     ?array  $commands = null,
     ?array  $aliases  = null,
-    bool    $repeat    = false,
   ) {
     $this->name     = $name;
-    $this->usage    = $usage    ?? '';
+    $this->about    = $about;
+    $this->version  = $version;
+    $this->authors  = $authors  ?? [];
     $this->args     = $args     ?? [];
     $this->flags    = $flags    ?? [];
     $this->commands = $commands ?? [];
     $this->aliases  = $aliases  ?? [];
-    $this->repeat   = $repeat;
+  }
+
+  static function new(string $name): static {
+    return new Command($name);
+  }
+
+  function about(string $about): self {
+    $this->about = $about;
+    return $this;
+  }
+
+  function version(string $version): self {
+    $this->version = $version;
+    return $this;
+  }
+
+  function authors(string ...$authors): self {
+    array_push($this->authors, ...$authors);
+    return $this;
+  }
+
+  function args(Arg ...$args): self {
+    array_push($this->args, ...$args);
+    return $this;
+  }
+
+  function flags(Flag ...$flags): self {
+    array_push($this->flags, ...$flags);
+    return $this;
+  }
+
+  function subcommands(Command ...$commands): self {
+    array_push($this->commands, ...$commands);
+    return $this;
   }
 }
 ?>

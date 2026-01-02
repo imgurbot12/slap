@@ -10,6 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
+use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Errors\ParseError;
 use Imgurbot12\Slap\Flags\Flag;
 
@@ -17,17 +18,17 @@ use Imgurbot12\Slap\Flags\Flag;
  *
  */
 class MissingValue extends ParseError {
-  /** flag that is missing its value */
-  public Flag $flag;
+  /** source that is missing its value */
+  public Arg|Flag $src;
 
   /**
    * @param array<Command> $path
    * @param Flag           $flag
    */
-  function __construct(array $path, Flag $flag) {
-    $message = "a value is required for '--$flag->long <$flag->name>'";
+  function __construct(array $path, Arg|Flag $src) {
+    $message = "a value is required for '$src->name'";
     parent::__construct($path, $message);
-    $this->flag = $flag;
+    $this->src = $src;
   }
 }
 ?>

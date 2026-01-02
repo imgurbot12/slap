@@ -1,6 +1,6 @@
 <?php
 /**
- * Slap Flag Missing Value Exception
+ * Slap Unexpected Argument Exception
  *
  * @package   Imgurbot12/Slap
  * @category  Errors
@@ -11,25 +11,20 @@ declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
 use Imgurbot12\Slap\Errors\ParseError;
-use Imgurbot12\Slap\Flags\Flag;
-use Imgurbot12\Slap\Args\Arg;
 
 /**
  *
  */
-class InvalidValue extends ParseError {
-  /** source of invalid value */
-  public Arg|Flag $src;
+class UnexpectedArgument extends ParseError {
   /** invalid value given */
   public mixed $value;
 
   /**
    * @param array<Command> $path
    */
-  function __construct(array $path, Arg|Flag $src, mixed $value) {
-    $message = "$src->name invalid value '$value'";
+  function __construct(array $path, mixed $value) {
+    $message = "unexpected argument " . json_encode($value);
     parent::__construct($path, $message);
-    $this->src = $src;
   }
 }
 ?>
