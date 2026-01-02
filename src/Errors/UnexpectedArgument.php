@@ -10,12 +10,13 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
+use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Errors\ParseError;
 
 /**
  *
  */
-class UnexpectedArgument extends ParseError {
+final class UnexpectedArgument extends ParseError {
   /** invalid value given */
   public mixed $value;
 
@@ -23,7 +24,9 @@ class UnexpectedArgument extends ParseError {
    * @param array<Command> $path
    */
   function __construct(array $path, mixed $value) {
-    $message = "unexpected argument " . json_encode($value);
+    $show = json_encode($value);
+    if ($show === false) $show = strval($value);
+    $message = "unexpected argument $show";
     parent::__construct($path, $message);
   }
 }

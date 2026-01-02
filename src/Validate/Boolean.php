@@ -16,22 +16,17 @@ const B_TRUE  = ['1', 'true', 'y', 'ye', 'yes'];
 const B_FALSE = ['0', 'false', 'n', 'na', 'no'];
 
 /**
- * @implements Validator<?string>
+ * @implements Validator<mixed>
  */
-class Boolean implements Validator {
-  /**
-   * @param ?string $value
-   */
+final class Boolean implements Validator {
+  #[\Override]
   function validate($value): bool {
     if ($value === null || is_bool($value)) return true;
     if (in_array($value, B_TRUE)) return true;
     if (in_array($value, B_FALSE)) return true;
     return false;
   }
-
-  /**
-   * @param ?string $value
-   */
+  #[\Override]
   function convert($value): mixed {
     if ($value === null || in_array($value, B_TRUE)) return true;
     if (in_array($value, B_FALSE)) return false;

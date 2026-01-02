@@ -20,6 +20,7 @@ use Imgurbot12\Slap\Validate\Validator;
  * @extends Flag<int>
  */
 final class IntFlag extends Flag {
+  #[\Override]
   function validator(): Validator {
     return new Integer();
   }

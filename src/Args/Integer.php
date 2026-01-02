@@ -17,9 +17,10 @@ use Imgurbot12\Slap\Validate\Integer as IntegerV;
 /**
  * Integer Argument Type
  *
- * @extends Argument<bool>
+ * @extends Arg<bool>
  */
 final class Integer extends Arg {
+  #[\Override]
   function validator(): Validator {
     return new IntegerV();
   }

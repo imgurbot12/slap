@@ -18,7 +18,7 @@ use Imgurbot12\Slap\Flags\Flag;
 /**
  *
  */
-class Command {
+final class Command {
   /** primary name associated with the command */
   public string $name;
   /** usage description tied to command */
@@ -27,7 +27,7 @@ class Command {
   public array $authors;
   /** command version */
   public string  $version;
-  /** @var array<Argument> arguments linked with the command */
+  /** @var array<Arg> arguments linked with the command */
   public array $args;
   /** @var array<Flag> flags linked with the command */
   public array $flags;
@@ -38,7 +38,7 @@ class Command {
 
   /**
    * @param ?array<string>   $authors
-   * @param ?array<Argument> $args
+   * @param ?array<Arg>      $args
    * @param ?array<Flag>     $flags
    * @param ?array<Command>  $commands
    * @param ?array<string>   $aliases
@@ -63,35 +63,56 @@ class Command {
     $this->aliases  = $aliases  ?? [];
   }
 
-  static function new(string $name): static {
+  /**
+   * Build new Command Instance
+   */
+  static function new(string $name): Command {
     return new Command($name);
   }
 
+  /**
+   * Configure Command About
+   */
   function about(string $about): self {
     $this->about = $about;
     return $this;
   }
 
+  /**
+   * Configure Command Version
+   */
   function version(string $version): self {
     $this->version = $version;
     return $this;
   }
 
+  /**
+   * Configure Command Authors
+   */
   function authors(string ...$authors): self {
     array_push($this->authors, ...$authors);
     return $this;
   }
 
+  /**
+   * Configure Command Arguments
+   */
   function args(Arg ...$args): self {
     array_push($this->args, ...$args);
     return $this;
   }
 
+  /**
+   * Configure Command Flags
+   */
   function flags(Flag ...$flags): self {
     array_push($this->flags, ...$flags);
     return $this;
   }
 
+  /**
+   * Configure Command Subcommands
+   */
   function subcommands(Command ...$commands): self {
     array_push($this->commands, ...$commands);
     return $this;

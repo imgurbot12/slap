@@ -10,13 +10,15 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
+use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Errors\UnexpectedArgument;
+use Imgurbot12\Slap\Flags\Flag;
 
 /**
  *
  */
-class Parser {
+final class Parser {
   protected Command $command;
 
   function __construct(Command &$command) {
@@ -69,6 +71,7 @@ class Parser {
    * @return array<string, mixed>
    */
   function split_flags(array $flags, array &$args, array $path): array {
+
     /** @var array<integer, Flag> */
     $indexes = [];
     $c_flags = $flags;
@@ -84,6 +87,7 @@ class Parser {
     /** @var array<string, array<string>> */
     $values = [];
     foreach ($indexes as $idx => &$flag) {
+      /** @var integer $idx */
       array_splice($args, $idx, 1);
       $has_value = !isset($indexes[$idx + 1]) && $idx + 1 <= count($args);
       $value     = ($has_value) ? array_splice($args, $idx, 1)[0] : null;
@@ -105,9 +109,9 @@ class Parser {
   /**
    * Parse Command Parameters from the Arguments
    *
-   * @param  array<Argument> $params
-   * @param  array<string>   $args
-   * @param  array<Command>  $path
+   * @param  array<Arg>     $params
+   * @param  array<string>  $args
+   * @param  array<Command> $path
    * @return array<mixed>
    */
   function validate_args(array $params, array &$args, array $path): array {

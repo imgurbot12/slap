@@ -10,13 +10,14 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
+use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Errors\ParseError;
 use Imgurbot12\Slap\Flags\Flag;
 
 /**
  *
  */
-class FlagRequired extends ParseError {
+final class FlagRequired extends ParseError {
   /** flag that is missing its value */
   public Flag $flag;
 

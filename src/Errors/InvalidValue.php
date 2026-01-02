@@ -10,14 +10,15 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
+use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Errors\ParseError;
 use Imgurbot12\Slap\Flags\Flag;
-use Imgurbot12\Slap\Args\Arg;
 
 /**
  *
  */
-class InvalidValue extends ParseError {
+final class InvalidValue extends ParseError {
   /** source of invalid value */
   public Arg|Flag $src;
   /** invalid value given */

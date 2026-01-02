@@ -17,9 +17,10 @@ use Imgurbot12\Slap\Validate\Str as StrV;
 /**
  * String Argument Type
  *
- * @extends Argument<bool>
+ * @extends Arg<bool>
  */
 final class Str extends Arg {
+  #[\Override]
   function validator(): Validator {
     return new StrV();
   }

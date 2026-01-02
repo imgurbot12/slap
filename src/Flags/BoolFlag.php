@@ -32,6 +32,7 @@ final class BoolFlag extends Flag {
     $this->requires_value = !$allow_null;
   }
 
+  #[\Override]
   function validator(): Validator {
     return new Boolean();
   }

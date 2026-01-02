@@ -17,9 +17,10 @@ use Imgurbot12\Slap\Validate\Boolean as BooleanV;
 /**
  * Boolean Argument Type
  *
- * @extends Argument<bool>
+ * @extends Arg<bool>
  */
 final class Boolean extends Arg {
+  #[\Override]
   function validator(): Validator {
     return new BooleanV();
   }

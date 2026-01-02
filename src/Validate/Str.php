@@ -13,19 +13,14 @@ namespace Imgurbot12\Slap\Validate;
 use Imgurbot12\Slap\Validate\Validator;
 
 /**
- * @implements Validator<?string>
+ * @implements Validator<mixed>
  */
-class Str implements Validator {
-  /**
-   * @param ?string $value
-   */
+final class Str implements Validator {
+  #[\Override]
   function validate($value): bool {
     return $value === null || is_string($value);
   }
-
-  /**
-   * @param ?string $value
-   */
+  #[\Override]
   function convert($value): mixed {
     return strval($value);
   }
