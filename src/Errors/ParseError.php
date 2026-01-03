@@ -10,21 +10,21 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Errors;
 
-use Imgurbot12\Slap\Command;
+use Imgurbot12\Slap\Parse\Context;
 
 /**
  *
  */
 class ParseError extends \Exception {
-  /** @var array<Command> path of command/argument construction */
-  public array $path;
+  /** context of command/argument construction */
+  public Context $ctx;
 
   /**
-   * @param array<Command> $path
+   * @param Context $ctx
    */
-  function __construct(array $path, string $message) {
+  function __construct(Context &$ctx, string $message) {
     parent::__construct($message);
-    $this->path = $path;
+    $this->ctx = $ctx;
   }
 }
 ?>

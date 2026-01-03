@@ -13,9 +13,6 @@ namespace Imgurbot12\Slap\Args;
 use Imgurbot12\Slap\Args\Boolean;
 use Imgurbot12\Slap\Args\Integer;
 use Imgurbot12\Slap\Args\Str;
-use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Errors\MissingValue;
-use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Validate\Validator;
 
 /**
@@ -30,7 +27,7 @@ abstract class Arg {
   public mixed $default;
 
   /** internal validator implementation */
-  private Validator $validator;
+  readonly public Validator $validator;
 
   /**
    * @param ?T $default
@@ -75,20 +72,6 @@ abstract class Arg {
   function default($default): self {
     $this->default = $default;
     return $this;
-  }
-
-  /**
-   * Validate and Finalize Argument Value for Parsing Result
-   *
-   * @param array<Command> $path
-   */
-  function finalize(array $path, mixed $value): mixed {
-    $value ??= $this->default;
-    if ($value === null) throw new MissingValue($path, $this);
-    if (!$this->validator->validate($value)) {
-      throw new InvalidValue($path, $this, $value);
-    }
-    return $this->validator->convert($value);
   }
 }
 ?>

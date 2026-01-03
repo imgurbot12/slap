@@ -10,10 +10,6 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Flags;
 
-use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Errors\InvalidValue;
-use Imgurbot12\Slap\Errors\FlagRequired;
-use Imgurbot12\Slap\Errors\MissingValue;
 use Imgurbot12\Slap\Validate\Validator;
 
 use Imgurbot12\Slap\Flags\BoolFlag;
@@ -40,7 +36,7 @@ abstract class Flag {
   /** allow flag to be repeated multiple times */
   public bool $repeat = false;
   /** internal validator implementation */
-  private Validator $validator;
+  public readonly Validator $validator;
 
   //TODO: validaters for short/long and requiring one or the other
   //TODO: required vs default being exclusive
@@ -122,25 +118,6 @@ abstract class Flag {
   function default($default): self {
     $this->default = $default;
     return $this;
-  }
-
-  /**
-   * Validate and Finalize Flag Value for Parsing Result
-   *
-   * @param array<Command> $path
-   */
-  function finalize(array $path, mixed $value): mixed {
-    if ($value === '<__missing>') {
-      if ($this->required) throw new FlagRequired($path, $this);
-      return $this->default;
-    }
-    if ($value === null && $this->requires_value) {
-      throw new MissingValue($path, $this);
-    }
-    if (!$this->validator->validate($value)) {
-      throw new InvalidValue($path, $this, $value);
-    }
-    return $this->validator->convert($value);
   }
 }
 ?>

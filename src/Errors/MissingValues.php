@@ -18,16 +18,16 @@ use Imgurbot12\Slap\Flags\Flag;
 /**
  *
  */
-final class InvalidValue extends ParseError {
-  /** source of invalid value */
-  public Arg|Flag $src;
-  /** invalid value given */
-  public mixed $value;
+final class MissingValues extends ParseError {
+  /** @var array<Arg|Flag> source that is missing its value */
+  public array $missing;
 
-  function __construct(Context &$ctx, Arg|Flag $src, mixed $value) {
-    $message = "$src->name invalid value '$value'";
-    parent::__construct($ctx, $message);
-    $this->src = $src;
+  /**
+   * @param array<Arg|Flag> $missing
+   */
+  function __construct(Context &$ctx, array $missing) {
+    parent::__construct($ctx, "expected values are missing " . print_r($missing, true));
+    $this->missing = $missing;
   }
 }
 ?>

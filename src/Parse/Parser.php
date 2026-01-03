@@ -8,12 +8,16 @@
  * @copyright MIT
  */
 declare(strict_types=1);
-namespace Imgurbot12\Slap;
+namespace Imgurbot12\Slap\Parse;
 
 use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Errors\UnexpectedArgument;
 use Imgurbot12\Slap\Flags\Flag;
+
+use Imgurbot12\Slap\Parse\Context;
+use Imgurbot12\Slap\Errors\FlagRequired;
+use Imgurbot12\Slap\Errors\InvalidValue;
+use Imgurbot12\Slap\Errors\UnexpectedArg;
 
 /**
  *
@@ -26,14 +30,46 @@ final class Parser {
   }
 
   /**
+   * Validate and Finalize Argument Value for Parsing Result
+   */
+  function validate_arg(Arg &$arg, Context &$ctx, mixed $value): mixed {
+    $value ??= $arg->default;
+    if ($value === null) {
+      $ctx->is_missing($arg);
+      return null;
+    }
+    if (!$arg->validator->validate($value)) {
+      throw new InvalidValue($ctx, $this, $value);
+    }
+    return $arg->validator->convert($value);
+  }
+
+  /**
+   * Validate and Finalize Flag Value for Parsing Result
+   */
+  function validate_flag(Flag &$flag, Context &$ctx, mixed $value): mixed {
+    if ($value === '<__missing>') {
+      if ($flag->required) throw new FlagRequired($ctx, $this);
+      return $flag->default;
+    }
+    if ($value === null && $flag->requires_value) {
+      $ctx->is_missing($flag);
+      return null;
+    }
+    if (!$flag->validator->validate($value)) {
+      throw new InvalidValue($ctx, $flag, $value);
+    }
+    return $flag->validator->convert($value);
+  }
+
+  /**
    * Parse Subcommands and their Parameters from the Arguments
    *
    * @param  array<Command> $commands
    * @param  array<string>  $args
-   * @param  array<Command> $path
    * @return array<string, mixed>
    */
-  function split_commands(array $commands, array &$args, array $path) {
+  function split_commands(array $commands, array &$args, Context &$ctx) {
     /** @var array<integer, Command> */
     $indexes  = [];
     foreach ($args as $idx => &$arg) {
@@ -48,15 +84,16 @@ final class Parser {
     $parsed  = [];
     $indexes = array_reverse($indexes, preserve_keys: true);
     foreach ($indexes as $idx => &$command) {
-      $c_path     = [...$path, $command];
+      $c_ctx      = $ctx->stack($command);
       $c_args     = array_slice(array_splice($args, $idx), 1);
-      $c_commands = $this->split_commands($command->commands, $c_args, $c_path);
-      $c_flags    = $this->split_flags($command->flags, $c_args, $c_path);
-      $c_params   = $this->validate_args($command->args, $c_args, $c_path);
+      $c_commands = $this->split_commands($command->commands, $c_args, $c_ctx);
+      $c_flags    = $this->split_flags($command->flags, $c_args, $c_ctx);
+      $c_params   = $this->split_args($command->args, $c_args, $c_ctx);
+      $c_ctx->finalize();
       $parsed[$command->name] = [
+        'args'     => $c_params,
         'commands' => $c_commands,
         'flags'    => $c_flags,
-        'args'     => $c_params,
       ];
     }
     return $parsed;
@@ -67,11 +104,9 @@ final class Parser {
    *
    * @param  array<Flag>    $flags
    * @param  array<string>  $args
-   * @param  array<Command> $path
    * @return array<string, mixed>
    */
-  function split_flags(array $flags, array &$args, array $path): array {
-
+  function split_flags(array $flags, array &$args, Context &$ctx): array {
     /** @var array<integer, Flag> */
     $indexes = [];
     $c_flags = $flags;
@@ -101,7 +136,7 @@ final class Parser {
       if ($f_values === null) $value = '<__missing>';
       elseif ($flag->repeat) $value = $f_values;
       else $value = $f_values[0];
-      $parsed[$flag->name] = $flag->finalize($path, $value);
+      $parsed[$flag->name] = $this->validate_flag($flag, $ctx, $value);
     }
     return $parsed;
   }
@@ -111,17 +146,16 @@ final class Parser {
    *
    * @param  array<Arg>     $params
    * @param  array<string>  $args
-   * @param  array<Command> $path
    * @return array<mixed>
    */
-  function validate_args(array $params, array &$args, array $path): array {
+  function split_args(array $params, array &$args, Context &$ctx): array {
     $values = [];
     foreach ($params as &$p) {
       $value = array_shift($args);
-      $values[$p->name] = $p->finalize($path, $value);
+      $values[$p->name] = $this->validate_arg($p, $ctx, $value);
     }
     $unexpected = array_shift($args);
-    if ($unexpected !== null) throw new UnexpectedArgument($path, $unexpected);
+    if ($unexpected !== null) throw new UnexpectedArg($ctx, $unexpected);
     return $values;
   }
 
@@ -130,13 +164,11 @@ final class Parser {
    * @return array<string, mixed>
    */
   function parse(array $args): array {
-    // parse sub-commands
-    $commands = $this->split_commands($this->command->commands, $args, []);
-    $flags    = $this->split_flags($this->command->flags, $args, []);
-    $params   = $this->validate_args($this->command->args, $args, []);
-    $result   = ['flags' => $flags, 'args' => $args, 'commands' => $commands];
-    echo json_encode($result);
-    return [];
+    $ctx      = new Context($this->command);
+    $commands = $this->split_commands($this->command->commands, $args, $ctx);
+    $flags    = $this->split_flags($this->command->flags, $args, $ctx);
+    $params   = $this->split_args($this->command->args, $args, $ctx);
+    return ['args' => $args, 'commands' => $commands, 'flags' => $flags];
   }
 }
 ?>
