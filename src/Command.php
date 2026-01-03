@@ -10,6 +10,9 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
+//TODO: real world tests and better unit-tests
+//TODO: dataclass/attribute parser implementations
+
 use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Flags\Flag;
 
@@ -19,8 +22,6 @@ use Imgurbot12\Slap\Parse\Parser;
 use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\MissingValues;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
-
-//TODO: validate against command/flag/argument name overlap
 
 /**
  * Command Line Interface Builder
@@ -69,6 +70,55 @@ final class Command {
     $this->flags    = $flags    ?? [];
     $this->commands = $commands ?? [];
     $this->aliases  = $aliases  ?? [];
+    $this->check_duplicate_args();
+    $this->check_duplicate_flags();
+    $this->check_duplicate_commands();
+  }
+
+  /**
+   * Raise Exception if Duplicate found in Args
+   */
+  protected function check_duplicate_args(): void {
+    $reserved = [];
+    foreach ($this->args as &$arg) {
+      if (!in_array($arg->name, $reserved)) {
+        $reserved[] = $arg->name;
+        continue;
+      };
+      throw new \Exception("$this->name has duplicate argument '$arg->name'");
+    }
+  }
+
+  /**
+   * Raise Exception if Duplicate found in Flags
+   */
+  protected function check_duplicate_flags(): void {
+    $reserved = [];
+    foreach ($this->flags as &$flag) {
+      if (in_array($flag->short, $reserved)) {
+        throw new \Exception("$this->name has duplicate flag '-$flag->short'");
+      }
+      if (in_array($flag->long, $reserved)) {
+        throw new \Exception("$this->name has duplicate flag '--$flag->long'");
+      }
+      array_push($reserved, $flag->short, $flag->long);
+    }
+  }
+
+  /**
+   * Raise Exception if Duplicate found in Commands
+   */
+  protected function check_duplicate_commands(): void {
+    $reserved = [];
+    foreach ($this->commands as &$cmd) {
+      $aliases = [$cmd->name, ...$cmd->aliases];
+      $matches = array_filter($aliases, fn ($v) => in_array($v, $reserved));
+      $match   = array_shift($matches);
+      if ($match !== null) {
+        throw new \Exception("$this->name has duplicate subcommand '$match'");
+      }
+      array_push($reserved, ...$aliases);
+    }
   }
 
   /**
@@ -107,6 +157,7 @@ final class Command {
    */
   function args(Arg ...$args): self {
     array_push($this->args, ...$args);
+    $this->check_duplicate_args();
     return $this;
   }
 
@@ -115,6 +166,7 @@ final class Command {
    */
   function flags(Flag ...$flags): self {
     array_push($this->flags, ...$flags);
+    $this->check_duplicate_flags();
     return $this;
   }
 
@@ -123,6 +175,7 @@ final class Command {
    */
   function subcommands(Command ...$commands): self {
     array_push($this->commands, ...$commands);
+    $this->check_duplicate_commands();
     return $this;
   }
 
@@ -139,8 +192,13 @@ final class Command {
     ?Help  $help   = null,
     mixed  $stderr = null,
   ): ?array {
-    $args ??= array_slice($argv, 1);
-    $help ??= new Help();
+    if ($args === null && php_sapi_name() !== "cli") {
+      throw new \Exception('PHP is not running as a CLI application');
+    }
+    /** @psalm-suppress UndefinedVariable */
+    $args   ??= array_slice($argv, 1); // @phpstan-ignore variable.undefined
+    $help   ??= new Help();
+    $stderr ??= STDERR;
     try {
       $parser = new Parser($this);
       return $parser->parse($args);
@@ -160,7 +218,7 @@ final class Command {
    * @param  ?array<string> $args    arguments to parse
    * @param  ?Help          $help    help page builder
    * @param  ?resource      $stderr  file resource to write error messages to
-   * @return ?array<string, mixed>
+   * @return array<string, mixed>
    */
   function parse(
     ?array $args   = null,

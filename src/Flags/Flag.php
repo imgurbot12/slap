@@ -10,6 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Flags;
 
+use Imgurbot12\Slap\Validate\Custom;
 use Imgurbot12\Slap\Validate\Validator;
 
 use Imgurbot12\Slap\Flags\BoolFlag;
@@ -35,11 +36,10 @@ abstract class Flag {
   public bool $requires_value = true;
   /** allow flag to be repeated multiple times */
   public bool $repeat = false;
+  /** @var array<Custom> custom validators for the flag */
+  public array $custom;
   /** internal validator implementation */
   public readonly Validator $validator;
-
-  //TODO: validaters for short/long and requiring one or the other
-  //TODO: required vs default being exclusive
 
   /**
    * @param ?T $default
@@ -56,6 +56,7 @@ abstract class Flag {
     $this->long      = $long ?? $name;
     $this->required  = $required;
     $this->default   = $default;
+    $this->custom    = [];
     $this->validator = $this->validator();
   }
 
@@ -84,7 +85,6 @@ abstract class Flag {
   static function int(string $name): IntFlag {
     return new IntFlag($name);
   }
-
 
   /**
    * Builder Method to Modify Short Flag
@@ -117,6 +117,17 @@ abstract class Flag {
    */
   function default($default): self {
     $this->default = $default;
+    return $this;
+  }
+
+  /**
+   * Apply a Custom Validator to the Flag
+   *
+   * @param callable(?string):bool $validator
+   * @param string                 $reason
+   */
+  function validate(callable $validator, string $reason): self {
+    $this->custom[] = new Custom($validator, $reason);
     return $this;
   }
 }

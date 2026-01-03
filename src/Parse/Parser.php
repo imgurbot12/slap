@@ -51,6 +51,10 @@ final class Parser {
       $cname = $this->validate_reason($arg);
       throw new InvalidValue($ctx, $arg, $value, "invalid $cname");
     }
+    foreach ($arg->custom as &$v) {
+      if ($v->validate($value)) continue;
+      throw new InvalidValue($ctx, $arg, $value, $v->reason);
+    }
     return $arg->validator->convert($value);
   }
 
@@ -74,6 +78,10 @@ final class Parser {
     if (!$flag->validator->validate($value)) {
       $cname = $this->validate_reason($flag);
       throw new InvalidValue($ctx, $flag, $value, "invalid $cname");
+    }
+    foreach ($flag->custom as &$v) {
+      if ($v->validate($value)) continue;
+      throw new InvalidValue($ctx, $flag, $value, $v->reason);
     }
     return $flag->validator->convert($value);
   }
