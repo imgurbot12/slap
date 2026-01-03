@@ -13,20 +13,23 @@ namespace Imgurbot12\Slap;
 use Imgurbot12\Slap\Args\Arg;
 use Imgurbot12\Slap\Flags\Flag;
 
+use Imgurbot12\Slap\Help;
+use Imgurbot12\Slap\Parse\Parser;
+
+use Imgurbot12\Slap\Errors\InvalidValue;
+use Imgurbot12\Slap\Errors\MissingValues;
+use Imgurbot12\Slap\Errors\UnexpectedArg;
+
 //TODO: validate against command/flag/argument name overlap
 
 /**
- *
+ * Command Line Interface Builder
  */
 final class Command {
   /** primary name associated with the command */
   public string $name;
   /** usage description tied to command */
   public string $about;
-  /** @var array<string> command authors */
-  public array $authors;
-  /** command version */
-  public string  $version;
   /** @var array<Arg> arguments linked with the command */
   public array $args;
   /** @var array<Flag> flags linked with the command */
@@ -35,6 +38,11 @@ final class Command {
   public array $commands;
   /** @var array<string> aliases also tied to the command */
   public array $aliases;
+
+  /** @var array<string> command authors */
+  public array $authors;
+  /** command version */
+  public string $version;
 
   /**
    * @param ?array<string>   $authors
@@ -116,6 +124,52 @@ final class Command {
   function subcommands(Command ...$commands): self {
     array_push($this->commands, ...$commands);
     return $this;
+  }
+
+  /**
+   * Try to Parse the Specified Arguments or Return Null on Fail
+   *
+   * @param  ?array<string> $args    arguments to parse
+   * @param  ?Help          $help    help page builder
+   * @param  ?resource      $stderr  file resource to write error messages to
+   * @return ?array<string, mixed>
+   */
+  function try_parse(
+    ?array $args   = null,
+    ?Help  $help   = null,
+    mixed  $stderr = null,
+  ): ?array {
+    $args ??= array_slice($argv, 1);
+    $help ??= new Help();
+    try {
+      $parser = new Parser($this);
+      return $parser->parse($args);
+    } catch (InvalidValue $err) {
+      fwrite($stderr, $help->err_invalid($err));
+    } catch (MissingValues $err) {
+      fwrite($stderr, $help->err_missing($err));
+    } catch (UnexpectedArg $err) {
+      fwrite($stderr, $help->err_unexpected($err));
+    }
+    return null;
+  }
+
+  /**
+   * Parse the Specified Arguments or Exit on Failure
+   *
+   * @param  ?array<string> $args    arguments to parse
+   * @param  ?Help          $help    help page builder
+   * @param  ?resource      $stderr  file resource to write error messages to
+   * @return ?array<string, mixed>
+   */
+  function parse(
+    ?array $args   = null,
+    ?Help  $help   = null,
+    mixed  $stderr = null,
+  ): array {
+    $result = $this->try_parse($args, $help, $stderr);
+    if ($result === null) exit(1);
+    return $result;
   }
 }
 ?>

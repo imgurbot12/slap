@@ -20,11 +20,19 @@ abstract class Colors {
   public readonly string $underline;
   public readonly string $standard;
 
+  /**
+   * @psalm-suppress UndefinedConstant
+   */
   final public function __construct() {
+    /** @phpstan-ignore classConstant.notFound */
     $this->error     = static::ERROR;
+    /** @phpstan-ignore classConstant.notFound */
     $this->warning   = static::WARNING;
+    /** @phpstan-ignore classConstant.notFound */
     $this->highlight = static::HIGHLIGHT;
+    /** @phpstan-ignore classConstant.notFound */
     $this->underline = static::UNDERLINE;
+    /** @phpstan-ignore classConstant.notFound */
     $this->standard  = static::STANDARD;
   }
 

@@ -23,7 +23,10 @@ use Imgurbot12\Slap\Errors\MissingValues;
 use Imgurbot12\Slap\Errors\ParseError;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
 
-class Help {
+/**
+ * Help Page Generator Implementation
+ */
+final class Help {
   /** enable coloring via ansi escape codes */
   public Colors $colors;
   /** indent to use when rendering */
@@ -41,15 +44,28 @@ class Help {
     $this->indent  = $indent;
   }
 
+  /**
+   * Generate Error Message for an Invalid Value
+   */
   function err_invalid(InvalidValue &$err): string {
-    return "";
+    $error = $this->colors->error('error:')
+      . $this->colors->standard(' invalid value ')
+      . $this->colors->warn($err->value)
+      . $this->colors->standard(' for ');
+    $error .= ($err->src instanceof Flag)
+      ? $this->flag_usage($err->ctx, $err->src)
+      : $this->arg_usage($err->ctx, $err->src);
+    $error .= $this->colors->standard(': ' . $err->reason);
+    $error .= str_repeat($this->newline, 2);
+    $error .= $this->colors->standard("For more information, try '--help'.");
+    return $error;
   }
 
   /**
    * Generate Error Message for Missing Values
    */
-  function err_missing(MissingValues &$err): string {
-    $error = $this->colors->error("error:")
+  function err_missing(MissingValues $err): string {
+    $error = $this->colors->error('error:')
       . $this->colors->standard(' the following required arguments were not provided:')
       . $this->newline;
     foreach ($err->missing as &$missing) {
@@ -67,8 +83,8 @@ class Help {
   /**
    * Generate Error Message for an Unexpected Argument
    */
-  function err_unexpected(UnexpectedArg &$err): string {
-    $error = $this->colors->error("error:")
+  function err_unexpected(UnexpectedArg $err): string {
+    $error = $this->colors->error('error:')
       . $this->colors->standard(' unexpected argument ')
       . $this->colors->warn($err->value)
       . $this->colors->standard(' found')
@@ -90,6 +106,8 @@ class Help {
   }
 
   /**
+   * Generate Argument Usage Snippet
+   *
    * @param Arg $arg
    */
   function arg_usage(Context &$ctx, Arg &$arg): string {
@@ -99,6 +117,8 @@ class Help {
   }
 
   /**
+   * Generate Flag Usage Snippet
+   *
    * @param Flag $flag
    */
   function flag_usage(Context &$ctx, Flag &$flag): string {
@@ -108,7 +128,10 @@ class Help {
     return "--$flag->long $value";
   }
 
-  function cmd_usage(Context &$ctx, Command &$cmd): string {
+  /**
+   * Generate Command Usage Snippet
+   */
+  function cmd_usage(Context &$ctx, Command $cmd): string {
     $usage = [];
     foreach ($cmd->flags as &$flag) $usage[] = $this->flag_usage($ctx, $flag);
     foreach ($cmd->args as &$arg) $usage[] = $this->arg_usage($ctx, $arg);

@@ -15,7 +15,6 @@ use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Flags\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
-use Imgurbot12\Slap\Errors\FlagRequired;
 use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
 
@@ -30,7 +29,17 @@ final class Parser {
   }
 
   /**
+   * Generate InvalidValue Valiation Error Reason from Validator ClassName
+   */
+  function validate_reason(Arg|Flag $obj): string {
+    $path = explode('\\', $obj->validator::class);
+    return strtolower(end($path));
+  }
+
+  /**
    * Validate and Finalize Argument Value for Parsing Result
+   *
+   * @param Arg $arg
    */
   function validate_arg(Arg &$arg, Context &$ctx, mixed $value): mixed {
     $value ??= $arg->default;
@@ -39,17 +48,23 @@ final class Parser {
       return null;
     }
     if (!$arg->validator->validate($value)) {
-      throw new InvalidValue($ctx, $this, $value);
+      $cname = $this->validate_reason($arg);
+      throw new InvalidValue($ctx, $arg, $value, "invalid $cname");
     }
     return $arg->validator->convert($value);
   }
 
   /**
    * Validate and Finalize Flag Value for Parsing Result
+   *
+   * @param Flag $flag
    */
   function validate_flag(Flag &$flag, Context &$ctx, mixed $value): mixed {
     if ($value === '<__missing>') {
-      if ($flag->required) throw new FlagRequired($ctx, $this);
+      if ($flag->required) {
+        $ctx->is_missing($flag);
+        return null;
+      };
       return $flag->default;
     }
     if ($value === null && $flag->requires_value) {
@@ -57,7 +72,8 @@ final class Parser {
       return null;
     }
     if (!$flag->validator->validate($value)) {
-      throw new InvalidValue($ctx, $flag, $value);
+      $cname = $this->validate_reason($flag);
+      throw new InvalidValue($ctx, $flag, $value, "invalid $cname");
     }
     return $flag->validator->convert($value);
   }

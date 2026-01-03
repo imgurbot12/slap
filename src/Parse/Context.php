@@ -31,6 +31,7 @@ final class Context {
   }
 
   function cmd(): Command {
+    /** @var Command */
     return end($this->path);
   }
 

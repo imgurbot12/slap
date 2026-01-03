@@ -23,11 +23,21 @@ final class InvalidValue extends ParseError {
   public Arg|Flag $src;
   /** invalid value given */
   public mixed $value;
+  /** reason associated with invalidation */
+  public string $reason;
 
-  function __construct(Context &$ctx, Arg|Flag $src, mixed $value) {
-    $message = "$src->name invalid value '$value'";
-    parent::__construct($ctx, $message);
-    $this->src = $src;
+  function __construct(
+    Context &$ctx,
+    Arg|Flag $src,
+    mixed    $value,
+    string   $reason
+  ) {
+    $show = json_encode($value);
+    if ($show === false) $show = strval($value);
+    parent::__construct($ctx, "$src->name = $show $reason");
+    $this->src    = $src;
+    $this->value  = $show;
+    $this->reason = $reason;
   }
 }
 ?>
