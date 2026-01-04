@@ -197,13 +197,13 @@ final class Command {
    * @param  ?array<string> $args    arguments to parse
    * @param  ?Help          $help    help page builder
    * @param  ?resource      $stderr  file resource to write error messages to
-   * @return ?array<string, mixed>
+   * @return array<string, mixed>|int
    */
   function try_parse(
     ?array $args   = null,
     ?Help  $help   = null,
     mixed  $stderr = null,
-  ): ?array {
+  ): array|int {
     global $argv;
     if ($args === null && php_sapi_name() !== "cli") {
       throw new \Exception('PHP is not running as a CLI application');
@@ -216,6 +216,7 @@ final class Command {
       return $parser->parse($args);
     } catch (HelpError $err) {
       fwrite($stderr, $help->process_help($err));
+      if ($err->resolved === true) return 0;
     } catch (InvalidValue $err) {
       fwrite($stderr, $help->err_invalid($err));
     } catch (MissingValues $err) {
@@ -223,7 +224,7 @@ final class Command {
     } catch (UnexpectedArg $err) {
       fwrite($stderr, $help->err_unexpected($err));
     }
-    return null;
+    return 1;
   }
 
   /**
@@ -240,7 +241,7 @@ final class Command {
     mixed  $stderr = null,
   ): array {
     $result = $this->try_parse($args, $help, $stderr);
-    if ($result === null) exit(1);
+    if (is_int($result)) exit($result);
     return $result;
   }
 }

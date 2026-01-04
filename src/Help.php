@@ -31,6 +31,8 @@ final class Help {
   public Colors $colors;
   /** indent to use when rendering */
   public string $indent;
+  /** single space to use when rendering */
+  public string $space;
   /** newline to use when rendering */
   public string $newline;
 
@@ -40,16 +42,18 @@ final class Help {
   public Command $command;
 
   function __construct(
-    ?Colors $colors = null,
-    string  $indent = '  ',
+    ?Colors $colors  = null,
+    string  $indent  = '  ',
+    string  $space   = ' ',
     string  $newline = "\n"
   ) {
     $this->colors  = $colors ?? new Ansi();
-    $this->newline = $newline;
+    $this->space   = $space;
     $this->indent  = $indent;
-    $this->flag    = Flag::bool('help')->about('Print help');
+    $this->newline = $newline;
+    $this->flag    = Flag::bool('help')->short('h')->about('Print help');
     $this->command = Command::new('help')
-    ->about('Print this message or the help of the given subcommand(s)');
+      ->about('Print this message or the help of the given subcommand(s)');
   }
 
   /**
@@ -62,28 +66,79 @@ final class Help {
     if (!empty($command->commands) &&
       !in_array($this->command, $command->commands)) {
       $command->commands[] = $this->command;
+      foreach ($command->commands as &$cmd) {
+        $this->apply_helpers($cmd);
+      }
     }
   }
 
   /**
    * Translate Requested Help Path to Relevant Help Handler
    */
-  function process_help(HelpError $err): string {
+  function process_help(HelpError &$err): string {
     $command = $err->ctx->path[0];
     foreach ($err->path as $path) {
       $match = array_filter($command->commands,
-        fn (Command $sc) => $sc->name === $path || in_array($path, $sc));
+        fn (Command $sc) => in_array($path, $sc->__names()));
       if (empty($match)) return $this->err_help($err->ctx, $path);
-      $command = $match[0];
+      $command  = $match[0];
+      $err->ctx = $err->ctx->stack($command);
     }
+    $err->resolved = true;
     return $this->help($err->ctx, $command);
   }
 
-  //TODO: i dont like how the help is generated for bools with no val required...
-  //TODO: do arguments come before commands?
-  //TODO: proper buffering / spacing determination on help-gen
-  // - is 'about' buffered when on same line in clap??
-  // - sometimes 'about' is indentend on line below instead of same line
+  /**
+   * Build Space Buffered Output from Array of Items
+   *
+   * @template T
+   * @param  array<T>           $items
+   * @param  callable(T):string $left
+   * @param  callable(T):string $right
+   * @param  int                $threshold
+   * @return string
+   */
+  function buffer(
+    array    $items,
+    callable $left,
+    callable $right,
+    int $threshold = 80
+  ): string {
+    $r1 = [];
+    $r2 = [];
+    foreach ($items as &$item) {
+      $r1[] = ($left)($item);
+      $r2[] = ($right)($item);
+    }
+
+    $buffer = 0;
+    foreach ($r1 as $idx => &$line) {
+      $line = $this->indent . $line;
+      if (strlen($line) + strlen($r2[$idx]) > $threshold) {
+        $buffer = null;
+        break;
+      };
+      $buffer = ($buffer < strlen($line))
+        ? strlen($line)
+        : $buffer;
+    }
+
+    $lines = [];
+    if ($buffer !== null) {
+      foreach ($r1 as $idx => $a) {
+        $buf = str_repeat($this->space, $buffer - strlen($a) + 1);
+        $lines[] = $a . $buf . $r2[$idx];
+      }
+    } else {
+      foreach ($r1 as $idx => $a) {
+        $lines[] = $a
+          . $this->newline
+          . str_repeat($this->indent, 2)
+          . $r2[$idx];
+      }
+    }
+    return implode($this->newline, $lines) . $this->newline;
+  }
 
   /**
    * Generate Message for a Command Help Page
@@ -97,39 +152,29 @@ final class Help {
       $help .= $this->newline
         . $this->colors->underline('Arguments:')
         . $this->newline;
-      foreach ($cmd->args as &$arg) {
-        $help .= $this->indent
-          . $this->arg_usage($ctx, $arg)
-          . $this->colors->standard(' ')
-          . $this->colors->standard($arg->about)
-          . $this->newline;
-      }
+      $help .= $this->buffer($cmd->args,
+        fn ($a) => $this->arg_usage($ctx, $a),
+        fn ($a) => $a->about,
+      );
     }
     if (!empty($cmd->commands)) {
       $help .= $this->newline
         . $this->colors->underline('Commands:')
         . $this->newline;
-      foreach ($cmd->commands as &$cmd) {
-        $names = $cmd->__names();
-        $help .= $this->indent
-          . $this->colors->bold(implode(', ', $names))
-          . $this->newline
-          . str_repeat($this->indent, 2)
-          . $this->colors->standard($cmd->about)
-          . $this->newline;
-      }
+      $help .= $this->buffer($cmd->commands,
+        fn ($c) => $c->name,
+        fn ($c) => $c->about,
+      );
     }
     if (!empty($cmd->flags)) {
       $help .= $this->newline
         . $this->colors->underline('Options:')
         . $this->newline;
-      foreach ($cmd->flags as &$flag) {
-        $help .= $this->indent
-          . $this->flag_usage($ctx, $flag)
-          . $this->colors->standard(' ')
-          . $this->colors->standard($flag->about)
-          . $this->newline;
-      }
+      $short = array_filter($cmd->flags, fn ($f) => $f->short !== null);
+      $help .= $this->buffer($cmd->flags,
+        fn ($f) => $this->flag_usage($ctx, $f, !empty($short)),
+        fn ($f) => $f->about,
+      );
     }
     return $help;
   }
@@ -225,10 +270,17 @@ final class Help {
    *
    * @param Flag $flag
    */
-  function flag_usage(Context &$ctx, Flag &$flag): string {
-    $value = (!$flag->requires_value || $flag->default !== null)
-      ? '[' . strtoupper($flag->name) . ']'
-      : '<' . strtoupper($flag->name) . '>';
+  function flag_usage(
+    Context &$ctx, Flag &$flag, bool $use_short = false): string {
+    if (!$flag->requires_value) $value = '';
+    elseif ($flag->default !== null) $value = '[' . strtoupper($flag->name) . ']';
+    else $value = '<' . strtoupper($flag->name) . '>';
+
+    if ($use_short) {
+      return ($flag->short !== null)
+        ? "-$flag->short, --$flag->long $value"
+        : str_repeat($this->space, 4) . "--$flag->long $value";
+    }
     return "--$flag->long $value";
   }
 
@@ -236,9 +288,20 @@ final class Help {
    * Generate Command Usage Snippet
    */
   function cmd_usage(Context &$ctx, Command $cmd): string {
+    global $argv;
+    $path  = [...array_slice($ctx->path, 0, -1), $cmd];
     $usage = [];
-    foreach ($cmd->flags as &$flag) $usage[] = $this->flag_usage($ctx, $flag);
-    foreach ($cmd->args as &$arg) $usage[] = $this->arg_usage($ctx, $arg);
+    foreach ($path as $c) {
+      $usage[] = $c->name;
+      foreach ($c->flags as &$flag) {
+        if (!$flag->required || $flag->default !== null) continue;
+        $usage[] = $this->flag_usage($ctx, $flag);
+      }
+      foreach ($c->args as &$arg) {
+        if ($arg->default !== null) continue;
+        $usage[] = $this->arg_usage($ctx, $arg);
+      }
+    }
     return implode(' ', $usage);
   }
 }

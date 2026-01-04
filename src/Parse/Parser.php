@@ -94,7 +94,7 @@ final class Parser {
   /**
    * Search Arguments for Help Flag/Commands to Trigger Help
    *
-   * @param array<string> $args
+   * @param array<integer, string> $args
    */
   function split_help(array &$args, Context &$ctx): void {
     $flags = $this->help->flag->__flags();

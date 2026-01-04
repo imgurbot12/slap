@@ -20,6 +20,8 @@ final class HelpError extends \Exception {
   public Context $ctx;
   /** @var array<string> path requested for help */
   public array $path;
+  /** label help as resolved (should not count as error) */
+  public bool $resolved;
 
   /**
    * @param array<string> $path
@@ -28,6 +30,7 @@ final class HelpError extends \Exception {
     parent::__construct("help requested");
     $this->ctx  = $ctx;
     $this->path = $path;
+    $this->resolved = false;
   }
 }
 ?>
