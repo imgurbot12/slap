@@ -8,7 +8,7 @@
  * @copyright MIT
  */
 declare(strict_types=1);
-namespace Imgurbot12\Slap\Flags;
+namespace Imgurbot12\Slap;
 
 use Imgurbot12\Slap\Validate\Custom;
 use Imgurbot12\Slap\Validate\Validator;

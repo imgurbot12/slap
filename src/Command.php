@@ -17,8 +17,8 @@ namespace Imgurbot12\Slap;
 //TODO: real world tests and better unit-tests
 //TODO: dataclass/attribute parser implementations
 
-use Imgurbot12\Slap\Args\Arg;
-use Imgurbot12\Slap\Flags\Flag;
+use Imgurbot12\Slap\Arg;
+use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Help;
 use Imgurbot12\Slap\Parse\Parser;

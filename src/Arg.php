@@ -8,7 +8,7 @@
  * @copyright MIT
  */
 declare(strict_types=1);
-namespace Imgurbot12\Slap\Args;
+namespace Imgurbot12\Slap;
 
 use Imgurbot12\Slap\Args\Boolean;
 use Imgurbot12\Slap\Args\Integer;

@@ -3,7 +3,7 @@
  * Slap Boolean Validator Implementation
  *
  * @package   Imgurbot12/Slap
- * @category  Flags
+ * @category  Validation
  * @author    Andrew C Scott <imgurbot12@gmail.com>
  * @copyright MIT
  */

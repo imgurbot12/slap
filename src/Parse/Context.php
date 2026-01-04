@@ -10,9 +10,9 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Parse;
 
-use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Flags\Flag;
+use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Errors\MissingValues;
 

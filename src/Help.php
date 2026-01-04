@@ -3,7 +3,7 @@
  * Slap Help Page Generator Implementation
  *
  * @package   Imgurbot12/Slap
- * @category  Command
+ * @category  Help
  * @author    Andrew C Scott <imgurbot12@gmail.com>
  * @copyright MIT
  */
@@ -13,9 +13,9 @@ namespace Imgurbot12\Slap;
 use Imgurbot12\Slap\Colors\Ansi;
 use Imgurbot12\Slap\Colors\Colors;
 
-use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Flags\Flag;
+use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
 use Imgurbot12\Slap\Errors\HelpError;

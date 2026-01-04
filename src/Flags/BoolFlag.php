@@ -10,7 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Flags;
 
-use Imgurbot12\Slap\Flags\Flag;
+use Imgurbot12\Slap\Flag;
 use Imgurbot12\Slap\Validate\Boolean;
 use Imgurbot12\Slap\Validate\Validator;
 

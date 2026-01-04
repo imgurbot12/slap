@@ -10,10 +10,10 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Parse;
 
-use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Help;
 use Imgurbot12\Slap\Command;
-use Imgurbot12\Slap\Flags\Flag;
+use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
 use Imgurbot12\Slap\Errors\HelpError;
@@ -21,7 +21,7 @@ use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
 
 /**
- *
+ * Command Argument Parser Implementation
  */
 final class Parser {
   protected Help    $help;

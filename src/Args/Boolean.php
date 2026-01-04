@@ -10,7 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Args;
 
-use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Validate\Validator;
 use Imgurbot12\Slap\Validate\Boolean as BooleanV;
 
