@@ -23,6 +23,8 @@ use Imgurbot12\Slap\Flags\StrFlag;
 abstract class Flag {
   /** name associated with flag */
   public string $name;
+  /** usage description tied to flag */
+  public string $about;
   /** short identifier for flag */
   public ?string $short;
   /** long identifier for flag */
@@ -46,18 +48,29 @@ abstract class Flag {
    */
   function __construct(
     string  $name,
+    ?string $about    = null,
     ?string $short    = null,
     ?string $long     = null,
     bool    $required = false,
     mixed   $default  = null,
   ) {
     $this->name      = $name;
+    $this->about     = $about ?? '';
     $this->short     = $short;
     $this->long      = $long ?? $name;
     $this->required  = $required;
     $this->default   = $default;
     $this->custom    = [];
     $this->validator = $this->validator();
+  }
+
+  /**
+   * @return array<string>
+   */
+  function __flags(): array {
+    $flags = ["--$this->long"];
+    if ($this->short !== null) $flags[] = "-$this->short";
+    return $flags;
   }
 
   /**
@@ -84,6 +97,14 @@ abstract class Flag {
    */
   static function int(string $name): IntFlag {
     return new IntFlag($name);
+  }
+
+  /**
+   * Builder Method to Modify Flag About
+   */
+  function about(string $about): self {
+    $this->about = $about;
+    return $this;
   }
 
   /**

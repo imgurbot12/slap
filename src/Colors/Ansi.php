@@ -19,6 +19,7 @@ final class Ansi extends Colors {
   const ERROR     = "\033[31;1m%s\033[0m";
   const WARNING   = "\033[33m%s\033[0m";
   const HIGHLIGHT = "\033[32m%s\033[0m";
+  const BOLD      = "\033[1m%s\033[0m";
   const UNDERLINE = "\033[4;1m%s\033[0m";
   const STANDARD  = '%s';
 }

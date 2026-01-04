@@ -11,10 +11,12 @@ declare(strict_types=1);
 namespace Imgurbot12\Slap\Parse;
 
 use Imgurbot12\Slap\Args\Arg;
+use Imgurbot12\Slap\Help;
 use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Flags\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
+use Imgurbot12\Slap\Errors\HelpError;
 use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
 
@@ -22,10 +24,13 @@ use Imgurbot12\Slap\Errors\UnexpectedArg;
  *
  */
 final class Parser {
+  protected Help    $help;
   protected Command $command;
 
-  function __construct(Command &$command) {
+  function __construct(Help &$help, Command &$command) {
+    $this->help    = $help;
     $this->command = $command;
+    $this->help->apply_helpers($command);
   }
 
   /**
@@ -84,6 +89,25 @@ final class Parser {
       throw new InvalidValue($ctx, $flag, $value, $v->reason);
     }
     return $flag->validator->convert($value);
+  }
+
+  /**
+   * Search Arguments for Help Flag/Commands to Trigger Help
+   *
+   * @param array<string> $args
+   */
+  function split_help(array &$args, Context &$ctx): void {
+    $flags = $this->help->flag->__flags();
+    foreach ($flags as $flag) {
+      if (in_array($flag, $args)) throw new HelpError($ctx, []);
+    }
+
+    $commands = $this->help->command->__names();
+    foreach ($args as $idx => &$arg) {
+      if (!in_array($arg, $commands)) continue;
+      $help_args = array_slice($args, $idx + 1);
+      throw new HelpError($ctx, $help_args);
+    }
   }
 
   /**
@@ -188,10 +212,13 @@ final class Parser {
    * @return array<string, mixed>
    */
   function parse(array $args): array {
-    $ctx      = new Context($this->command);
+    $ctx = new Context($this->command);
+    $this->split_help($args, $ctx);
+
     $commands = $this->split_commands($this->command->commands, $args, $ctx);
     $flags    = $this->split_flags($this->command->flags, $args, $ctx);
     $params   = $this->split_args($this->command->args, $args, $ctx);
+    $ctx->finalize();
     return ['args' => $args, 'commands' => $commands, 'flags' => $flags];
   }
 }

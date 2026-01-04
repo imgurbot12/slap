@@ -18,9 +18,9 @@ use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Flags\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
+use Imgurbot12\Slap\Errors\HelpError;
 use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\MissingValues;
-use Imgurbot12\Slap\Errors\ParseError;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
 
 /**
@@ -34,6 +34,11 @@ final class Help {
   /** newline to use when rendering */
   public string $newline;
 
+  /** standard help flag */
+  public Flag $flag;
+  /** standard help subcommand */
+  public Command $command;
+
   function __construct(
     ?Colors $colors = null,
     string  $indent = '  ',
@@ -42,6 +47,103 @@ final class Help {
     $this->colors  = $colors ?? new Ansi();
     $this->newline = $newline;
     $this->indent  = $indent;
+    $this->flag    = Flag::bool('help')->about('Print help');
+    $this->command = Command::new('help')
+    ->about('Print this message or the help of the given subcommand(s)');
+  }
+
+  /**
+   * Apply Help Flag/Subcommand to Command
+   */
+  function apply_helpers(Command &$command): void {
+    if (!in_array($this->flag, $command->flags)) {
+      $command->flags[] = $this->flag;
+    }
+    if (!empty($command->commands) &&
+      !in_array($this->command, $command->commands)) {
+      $command->commands[] = $this->command;
+    }
+  }
+
+  /**
+   * Translate Requested Help Path to Relevant Help Handler
+   */
+  function process_help(HelpError $err): string {
+    $command = $err->ctx->path[0];
+    foreach ($err->path as $path) {
+      $match = array_filter($command->commands,
+        fn (Command $sc) => $sc->name === $path || in_array($path, $sc));
+      if (empty($match)) return $this->err_help($err->ctx, $path);
+      $command = $match[0];
+    }
+    return $this->help($err->ctx, $command);
+  }
+
+  //TODO: i dont like how the help is generated for bools with no val required...
+  //TODO: do arguments come before commands?
+  //TODO: proper buffering / spacing determination on help-gen
+  // - is 'about' buffered when on same line in clap??
+  // - sometimes 'about' is indentend on line below instead of same line
+
+  /**
+   * Generate Message for a Command Help Page
+   */
+  function help(Context &$ctx, Command &$cmd): string {
+    $help = $this->colors->underline('Usage:')
+      . $this->colors->standard(' ')
+      . $this->cmd_usage($ctx, $cmd)
+      . $this->newline;
+    if (!empty($cmd->args)) {
+      $help .= $this->newline
+        . $this->colors->underline('Arguments:')
+        . $this->newline;
+      foreach ($cmd->args as &$arg) {
+        $help .= $this->indent
+          . $this->arg_usage($ctx, $arg)
+          . $this->colors->standard(' ')
+          . $this->colors->standard($arg->about)
+          . $this->newline;
+      }
+    }
+    if (!empty($cmd->commands)) {
+      $help .= $this->newline
+        . $this->colors->underline('Commands:')
+        . $this->newline;
+      foreach ($cmd->commands as &$cmd) {
+        $names = $cmd->__names();
+        $help .= $this->indent
+          . $this->colors->bold(implode(', ', $names))
+          . $this->newline
+          . str_repeat($this->indent, 2)
+          . $this->colors->standard($cmd->about)
+          . $this->newline;
+      }
+    }
+    if (!empty($cmd->flags)) {
+      $help .= $this->newline
+        . $this->colors->underline('Options:')
+        . $this->newline;
+      foreach ($cmd->flags as &$flag) {
+        $help .= $this->indent
+          . $this->flag_usage($ctx, $flag)
+          . $this->colors->standard(' ')
+          . $this->colors->standard($flag->about)
+          . $this->newline;
+      }
+    }
+    return $help;
+  }
+
+  /**
+   * Generate Error Message for Invalid Help Request
+   */
+  function err_help(Context &$ctx, string $invalid): string {
+    $error = $this->colors->error('error:')
+      . $this->colors->standard(' unrecognized subcommand ')
+      . $this->colors->warn($invalid)
+      . $this->newline;
+    $error .= $this->err_suffix($ctx);
+    return $error;
   }
 
   /**
@@ -58,6 +160,7 @@ final class Help {
     $error .= $this->colors->standard(': ' . $err->reason);
     $error .= str_repeat($this->newline, 2);
     $error .= $this->colors->standard("For more information, try '--help'.");
+    $error .= $this->newline;
     return $error;
   }
 
@@ -76,7 +179,7 @@ final class Help {
       $error .= $this->newline;
     }
     $usage  = $this->cmd_usage($err->ctx, $err->ctx->cmd());
-    $error .= $this->err_suffix($err);
+    $error .= $this->err_suffix($err->ctx);
     return $error;
   }
 
@@ -89,19 +192,20 @@ final class Help {
       . $this->colors->warn($err->value)
       . $this->colors->standard(' found')
       . $this->newline;
-    $error .= $this->err_suffix($err);
+    $error .= $this->err_suffix($err->ctx);
     return $error;
   }
 
   /**
    * Generate Common Error Message Suffix
    */
-  function err_suffix(ParseError &$err): string {
-    $usage  = $this->cmd_usage($err->ctx, $err->ctx->cmd());
+  function err_suffix(Context &$ctx): string {
+    $usage  = $this->cmd_usage($ctx, $ctx->cmd());
     $error  = $this->newline . $this->colors->underline('Usage:') . ' ';
     $error .= $this->colors->standard($usage);
     $error .= str_repeat($this->newline, 2);
     $error .= $this->colors->standard("For more information, try '--help'.");
+    $error .= $this->newline;
     return $error;
   }
 

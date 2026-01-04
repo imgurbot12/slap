@@ -10,6 +10,10 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
+//TODO: complete help pages
+//TODO: builtin --help flag
+//TODO: builtin help subcommand
+//TODO: options to enable/disable builtin help features
 //TODO: real world tests and better unit-tests
 //TODO: dataclass/attribute parser implementations
 
@@ -19,6 +23,7 @@ use Imgurbot12\Slap\Flags\Flag;
 use Imgurbot12\Slap\Help;
 use Imgurbot12\Slap\Parse\Parser;
 
+use Imgurbot12\Slap\Errors\HelpError;
 use Imgurbot12\Slap\Errors\InvalidValue;
 use Imgurbot12\Slap\Errors\MissingValues;
 use Imgurbot12\Slap\Errors\UnexpectedArg;
@@ -73,6 +78,13 @@ final class Command {
     $this->check_duplicate_args();
     $this->check_duplicate_flags();
     $this->check_duplicate_commands();
+  }
+
+  /**
+   * @return array<string>
+   */
+  function __names(): array {
+    return [$this->name, ...$this->aliases];
   }
 
   /**
@@ -192,16 +204,18 @@ final class Command {
     ?Help  $help   = null,
     mixed  $stderr = null,
   ): ?array {
+    global $argv;
     if ($args === null && php_sapi_name() !== "cli") {
       throw new \Exception('PHP is not running as a CLI application');
     }
-    /** @psalm-suppress UndefinedVariable */
-    $args   ??= array_slice($argv, 1); // @phpstan-ignore variable.undefined
+    $args   ??= array_slice($argv, 1);
     $help   ??= new Help();
     $stderr ??= STDERR;
     try {
-      $parser = new Parser($this);
+      $parser = new Parser($help, $this);
       return $parser->parse($args);
+    } catch (HelpError $err) {
+      fwrite($stderr, $help->process_help($err));
     } catch (InvalidValue $err) {
       fwrite($stderr, $help->err_invalid($err));
     } catch (MissingValues $err) {

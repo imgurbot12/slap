@@ -22,13 +22,14 @@ use Imgurbot12\Slap\Validate\Validator;
 final class BoolFlag extends Flag {
   function __construct(
     string  $name,
+    ?string $about      = null,
     ?string $short      = null,
     ?string $long       = null,
     bool    $required   = false,
     ?bool   $default    = false,
     bool    $allow_null = true,
   ) {
-    parent::__construct($name, $short, $long, $required, $default);
+    parent::__construct($name, $about, $short, $long, $required, $default);
     $this->requires_value = !$allow_null;
   }
 

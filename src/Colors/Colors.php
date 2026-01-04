@@ -17,6 +17,7 @@ abstract class Colors {
   public readonly string $error;
   public readonly string $warning;
   public readonly string $highlight;
+  public readonly string $bold;
   public readonly string $underline;
   public readonly string $standard;
 
@@ -25,15 +26,17 @@ abstract class Colors {
    */
   final public function __construct() {
     /** @phpstan-ignore classConstant.notFound */
-    $this->error     = static::ERROR;
+    $this->error = static::ERROR;
     /** @phpstan-ignore classConstant.notFound */
-    $this->warning   = static::WARNING;
+    $this->warning = static::WARNING;
     /** @phpstan-ignore classConstant.notFound */
     $this->highlight = static::HIGHLIGHT;
     /** @phpstan-ignore classConstant.notFound */
+    $this->bold = static::BOLD;
+    /** @phpstan-ignore classConstant.notFound */
     $this->underline = static::UNDERLINE;
     /** @phpstan-ignore classConstant.notFound */
-    $this->standard  = static::STANDARD;
+    $this->standard = static::STANDARD;
   }
 
   final function error(string $error): string {
@@ -46,6 +49,10 @@ abstract class Colors {
 
   final function highlight(string $highlight): string {
     return sprintf($this->highlight, $highlight);
+  }
+
+  final function bold(string $bold): string {
+    return sprintf($this->bold, $bold);
   }
 
   final function underline(string $underline): string {
