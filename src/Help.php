@@ -260,7 +260,7 @@ final class Help {
    * @param Arg $arg
    */
   function arg_usage(Context &$ctx, Arg &$arg): string {
-    return ($arg->default === null)
+    return ($arg->required === true)
       ? '<' . strtoupper($arg->name) . '>'
       : '[' . strtoupper($arg->name) . ']';
   }

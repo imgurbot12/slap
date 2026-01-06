@@ -192,7 +192,7 @@ final class Command {
   }
 
   /**
-   * Try to Parse the Specified Arguments or Return Null on Fail
+   * Try to Parse the Specified Arguments or Return ExitCode on Fail
    *
    * @param  ?array<string> $args    arguments to parse
    * @param  ?Help          $help    help page builder

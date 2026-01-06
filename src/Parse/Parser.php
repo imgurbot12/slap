@@ -47,10 +47,12 @@ final class Parser {
    * @param Arg $arg
    */
   function validate_arg(Arg &$arg, Context &$ctx, mixed $value): mixed {
-    $value ??= $arg->default;
-    if ($value === null) {
-      $ctx->is_missing($arg);
-      return null;
+    if ($value === '<__missing>') {
+      if ($arg->required === true) {
+        $ctx->is_missing($arg);
+        return null;
+      }
+      return $arg->default;
     }
     if (!$arg->validator->validate($value)) {
       $cname = $this->validate_reason($arg);
@@ -70,7 +72,7 @@ final class Parser {
    */
   function validate_flag(Flag &$flag, Context &$ctx, mixed $value): mixed {
     if ($value === '<__missing>') {
-      if ($flag->required) {
+      if ($flag->required === true) {
         $ctx->is_missing($flag);
         return null;
       };
@@ -199,7 +201,7 @@ final class Parser {
   function split_args(array $params, array &$args, Context &$ctx): array {
     $values = [];
     foreach ($params as &$p) {
-      $value = array_shift($args);
+      $value = array_shift($args) ?? '<__missing>';
       $values[$p->name] = $this->validate_arg($p, $ctx, $value);
     }
     $unexpected = array_shift($args);
@@ -219,7 +221,7 @@ final class Parser {
     $flags    = $this->split_flags($this->command->flags, $args, $ctx);
     $params   = $this->split_args($this->command->args, $args, $ctx);
     $ctx->finalize();
-    return ['args' => $args, 'commands' => $commands, 'flags' => $flags];
+    return ['args' => $params, 'commands' => $commands, 'flags' => $flags];
   }
 }
 ?>

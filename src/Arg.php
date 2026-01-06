@@ -27,6 +27,8 @@ abstract class Arg {
   public string $name;
   /** usage description tied to argument */
   public string $about;
+  /** declare whether arg is required */
+  public bool $required;
   /** @var ?T default value for argument */
   public mixed $default;
 
@@ -38,9 +40,15 @@ abstract class Arg {
   /**
    * @param ?T $default
    */
-  function __construct(string $name, ?string $about = null, $default = null) {
+  function __construct(
+    string  $name,
+    ?string $about = null,
+    mixed   $default = null,
+    bool    $required = true
+  ) {
     $this->name      = $name;
     $this->about     = $about ?? '';
+    $this->required  = ($default !== null) || $required;
     $this->default   = $default;
     $this->custom    = [];
     $this->validator = $this->validator();
