@@ -11,7 +11,9 @@ declare(strict_types=1);
 namespace Imgurbot12\Slap\Derive;
 
 /**
+ * Subcommand Derrivation Designator
  *
+ * @api
  */
-final class SubCommands {}
+class SubCommands {}
 ?>

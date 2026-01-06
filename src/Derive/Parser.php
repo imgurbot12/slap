@@ -10,6 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap\Derive;
 
+use Imgurbot12\Slap\Derive\Command;
 use Imgurbot12\Slap\Derive\Flag;
 use Imgurbot12\Slap\Derive\ParserMap;
 use Imgurbot12\Slap\Derive\SubCommands;
@@ -73,20 +74,35 @@ function render_attrs(array $refattrs): array {
 }
 
 /**
+ * Command Application Derivation Parser
  *
+ * @api
  */
-final class Parser {
+class Parser {
 
   /**
+   * Build Command Object and Property Mapper from Subclass of Self
+   *
    * @param class-string $class
    * @return array{CommandBuilder, ParserMap}
    */
-  private static function build(string $class): array {
+  static function build(string $class): array {
     $map     = new ParserMap($class);
     $ref     = new \ReflectionClass($class);
     $props   = $ref->getProperties();
+    $attrs   = render_attrs($ref->getAttributes());
+
     $command = new CommandBuilder($class);
     $command->about = get_doc($ref) ?? '';
+    foreach ($attrs as &$attr) {
+      if (!($attr instanceof Command)) continue;
+      $command->name    = $attr->name  ?? $command->name;
+      $command->about   = $attr->about ?? $command->about;
+      $command->version = $attr->version ?? $command->version;
+      array_push($command->authors, ...$attr->authors);
+      array_push($command->aliases, ...$attr->aliases);
+    }
+
     foreach ($props as &$prop) {
       $name     = $prop->getName();
       $default  = $prop->getDefaultValue();
@@ -114,19 +130,18 @@ final class Parser {
       }
 
       foreach ($attrs as &$attr) {
-        if ($attr instanceof Flag) {
-          $fclass = FLAG_TYPES[$type] ?? null;
-          if ($fclass === null) throw new InvalidType($class, $name, $type);
-          $command->flags(new $fclass(
-            name:     $name,
-            about:    $about,
-            short:    $attr->short,
-            long:     $attr->long,
-            required: $required,
-            default:  $default,
-          ));
-          continue 2;
-        }
+        if (!($attr instanceof Flag)) continue;
+        $fclass = FLAG_TYPES[$type] ?? null;
+        if ($fclass === null) throw new InvalidType($class, $name, $type);
+        $command->flags(new $fclass(
+          name:     $name,
+          about:    $about,
+          short:    $attr->short,
+          long:     $attr->long,
+          required: $required,
+          default:  $default,
+        ));
+        continue 2;
       }
 
       $aclass = ARG_TYPES[$type] ?? null;
