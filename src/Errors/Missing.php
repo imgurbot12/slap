@@ -1,6 +1,6 @@
 <?php
 /**
- * Slap Flag Missing Value Exception
+ * Slap Flag/Argument Missing Value Exception
  *
  * @package   Imgurbot12/Slap
  * @category  Errors
@@ -18,7 +18,7 @@ use Imgurbot12\Slap\Flag;
 /**
  *
  */
-final class MissingValues extends ParseError {
+final class Missing extends ParseError {
   /** @var array<Arg|Flag> source that is missing its value */
   public array $missing;
 

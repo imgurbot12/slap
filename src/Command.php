@@ -24,9 +24,9 @@ use Imgurbot12\Slap\Help;
 use Imgurbot12\Slap\Parse\Parser;
 
 use Imgurbot12\Slap\Errors\HelpError;
-use Imgurbot12\Slap\Errors\InvalidValue;
-use Imgurbot12\Slap\Errors\MissingValues;
-use Imgurbot12\Slap\Errors\UnexpectedArg;
+use Imgurbot12\Slap\Errors\Invalid;
+use Imgurbot12\Slap\Errors\Missing;
+use Imgurbot12\Slap\Errors\Unexpected;
 
 /**
  * Command Line Interface Builder
@@ -49,6 +49,8 @@ final class Command {
   public array $authors;
   /** command version */
   public string $version;
+  /** declare whether subcommand is required */
+  public bool $subcommand_required;
 
   /**
    * @param ?array<string>   $authors
@@ -66,6 +68,7 @@ final class Command {
     ?array  $flags    = null,
     ?array  $commands = null,
     ?array  $aliases  = null,
+    bool    $subcommand_required = false,
   ) {
     $this->name     = $name;
     $this->about    = $about;
@@ -75,6 +78,7 @@ final class Command {
     $this->flags    = $flags    ?? [];
     $this->commands = $commands ?? [];
     $this->aliases  = $aliases  ?? [];
+    $this->subcommand_required = $subcommand_required;
     $this->check_duplicate_args();
     $this->check_duplicate_flags();
     $this->check_duplicate_commands();
@@ -192,6 +196,14 @@ final class Command {
   }
 
   /**
+   * Configure Whether SubCommand is Required or Not
+   */
+  function subcommand_required(bool $required): self {
+    $this->subcommand_required = $required;
+    return $this;
+  }
+
+  /**
    * Try to Parse the Specified Arguments or Return ExitCode on Fail
    *
    * @param  ?array<string> $args    arguments to parse
@@ -216,12 +228,12 @@ final class Command {
       return $parser->parse($args);
     } catch (HelpError $err) {
       fwrite($stderr, $help->process_help($err));
-      if ($err->resolved === true) return 0;
-    } catch (InvalidValue $err) {
+      if ($err->exitcode !== null) return $err->exitcode;
+    } catch (Invalid $err) {
       fwrite($stderr, $help->err_invalid($err));
-    } catch (MissingValues $err) {
+    } catch (Missing $err) {
       fwrite($stderr, $help->err_missing($err));
-    } catch (UnexpectedArg $err) {
+    } catch (Unexpected $err) {
       fwrite($stderr, $help->err_unexpected($err));
     }
     return 1;

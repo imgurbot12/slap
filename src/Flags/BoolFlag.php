@@ -27,9 +27,12 @@ final class BoolFlag extends Flag {
     ?string $long       = null,
     bool    $required   = false,
     ?bool   $default    = false,
+    bool    $repeat     = false,
+    ?array  $custom     = null,
     bool    $allow_null = true,
   ) {
-    parent::__construct($name, $about, $short, $long, $required, $default);
+    parent::__construct($name, $about, $short, $long,
+      $required, $default, $repeat, $custom);
     $this->requires_value = !$allow_null;
   }
 

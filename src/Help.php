@@ -19,9 +19,9 @@ use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
 use Imgurbot12\Slap\Errors\HelpError;
-use Imgurbot12\Slap\Errors\InvalidValue;
-use Imgurbot12\Slap\Errors\MissingValues;
-use Imgurbot12\Slap\Errors\UnexpectedArg;
+use Imgurbot12\Slap\Errors\Invalid;
+use Imgurbot12\Slap\Errors\Missing;
+use Imgurbot12\Slap\Errors\Unexpected;
 
 /**
  * Help Page Generator Implementation
@@ -84,7 +84,7 @@ final class Help {
       $command  = $match[0];
       $err->ctx = $err->ctx->stack($command);
     }
-    $err->resolved = true;
+    $err->exitcode ??= 0;
     return $this->help($err->ctx, $command);
   }
 
@@ -154,7 +154,7 @@ final class Help {
         . $this->newline;
       $help .= $this->buffer($cmd->args,
         fn ($a) => $this->arg_usage($ctx, $a),
-        fn ($a) => $a->about,
+        fn ($a) => $this->gen_about($a),
       );
     }
     if (!empty($cmd->commands)) {
@@ -173,7 +173,7 @@ final class Help {
       $short = array_filter($cmd->flags, fn ($f) => $f->short !== null);
       $help .= $this->buffer($cmd->flags,
         fn ($f) => $this->flag_usage($ctx, $f, !empty($short)),
-        fn ($f) => $f->about,
+        fn ($f) => $this->gen_about($f),
       );
     }
     return $help;
@@ -194,7 +194,7 @@ final class Help {
   /**
    * Generate Error Message for an Invalid Value
    */
-  function err_invalid(InvalidValue &$err): string {
+  function err_invalid(Invalid &$err): string {
     $error = $this->colors->error('error:')
       . $this->colors->standard(' invalid value ')
       . $this->colors->warn($err->value)
@@ -212,7 +212,7 @@ final class Help {
   /**
    * Generate Error Message for Missing Values
    */
-  function err_missing(MissingValues $err): string {
+  function err_missing(Missing $err): string {
     $error = $this->colors->error('error:')
       . $this->colors->standard(' the following required arguments were not provided:')
       . $this->newline;
@@ -231,7 +231,7 @@ final class Help {
   /**
    * Generate Error Message for an Unexpected Argument
    */
-  function err_unexpected(UnexpectedArg $err): string {
+  function err_unexpected(Unexpected $err): string {
     $error = $this->colors->error('error:')
       . $this->colors->standard(' unexpected argument ')
       . $this->colors->warn($err->value)
@@ -252,6 +252,21 @@ final class Help {
     $error .= $this->colors->standard("For more information, try '--help'.");
     $error .= $this->newline;
     return $error;
+  }
+
+  /**
+   * Generate About Section with Default
+   */
+  function gen_about(Arg|Flag $item): string {
+    if ($item instanceof Flag && $item->requires_value === false) {
+      return $item->about;
+    }
+    if ($item->default !== null) {
+      $default = $item->default;
+      if (is_bool($default)) $default = intval($default);
+      return "$item->about [default: $default]";
+    }
+    return $item->about;
   }
 
   /**

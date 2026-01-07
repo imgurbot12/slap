@@ -17,8 +17,8 @@ use Imgurbot12\Slap\Flag;
 
 use Imgurbot12\Slap\Parse\Context;
 use Imgurbot12\Slap\Errors\HelpError;
-use Imgurbot12\Slap\Errors\InvalidValue;
-use Imgurbot12\Slap\Errors\UnexpectedArg;
+use Imgurbot12\Slap\Errors\Invalid;
+use Imgurbot12\Slap\Errors\Unexpected;
 
 /**
  * Command Argument Parser Implementation
@@ -56,11 +56,11 @@ final class Parser {
     }
     if (!$arg->validator->validate($value)) {
       $cname = $this->validate_reason($arg);
-      throw new InvalidValue($ctx, $arg, $value, "invalid $cname");
+      throw new Invalid($ctx, $arg, $value, "invalid $cname");
     }
     foreach ($arg->custom as &$v) {
       if ($v->validate($value)) continue;
-      throw new InvalidValue($ctx, $arg, $value, $v->reason);
+      throw new Invalid($ctx, $arg, $value, $v->reason);
     }
     return $arg->validator->convert($value);
   }
@@ -84,11 +84,11 @@ final class Parser {
     }
     if (!$flag->validator->validate($value)) {
       $cname = $this->validate_reason($flag);
-      throw new InvalidValue($ctx, $flag, $value, "invalid $cname");
+      throw new Invalid($ctx, $flag, $value, "invalid $cname");
     }
     foreach ($flag->custom as &$v) {
       if ($v->validate($value)) continue;
-      throw new InvalidValue($ctx, $flag, $value, $v->reason);
+      throw new Invalid($ctx, $flag, $value, $v->reason);
     }
     return $flag->validator->convert($value);
   }
@@ -146,6 +146,14 @@ final class Parser {
         'flags'    => $c_flags,
       ];
     }
+
+    if (empty($parsed) && $ctx->cmd()->subcommand_required) {
+      $path = array_slice(array_map(fn ($c) => $c->name, $ctx->path), 1);
+      $ctx  = (count($path) > 0)
+        ? new Context(...array_slice($ctx->path, 0, -1))
+        : $ctx;
+      throw new HelpError($ctx, $path, 'command required', 1);
+    }
     return $parsed;
   }
 
@@ -170,7 +178,8 @@ final class Parser {
     }
 
     /** @var array<string, array<string>> */
-    $values = [];
+    $values  = [];
+    $indexes = array_reverse($indexes, preserve_keys: true);
     foreach ($indexes as $idx => &$flag) {
       /** @var integer $idx */
       array_splice($args, $idx, 1);
@@ -205,7 +214,7 @@ final class Parser {
       $values[$p->name] = $this->validate_arg($p, $ctx, $value);
     }
     $unexpected = array_shift($args);
-    if ($unexpected !== null) throw new UnexpectedArg($ctx, $unexpected);
+    if ($unexpected !== null) throw new Unexpected($ctx, $unexpected);
     return $values;
   }
 

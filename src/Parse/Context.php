@@ -14,7 +14,7 @@ use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Command;
 use Imgurbot12\Slap\Flag;
 
-use Imgurbot12\Slap\Errors\MissingValues;
+use Imgurbot12\Slap\Errors\Missing;
 
 /**
  * Parser Context Tracker
@@ -48,7 +48,7 @@ final class Context {
   }
 
   function finalize(): void {
-    if (!empty($this->missing)) throw new MissingValues($this, $this->missing);
+    if (!empty($this->missing)) throw new Missing($this, $this->missing);
   }
 }
 ?>

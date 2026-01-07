@@ -1,6 +1,6 @@
 <?php
 /**
- * Slap Flag Missing Value Exception
+ * Slap Flag/Argument Invalid Value Exception
  *
  * @package   Imgurbot12/Slap
  * @category  Errors
@@ -18,7 +18,7 @@ use Imgurbot12\Slap\Flag;
 /**
  *
  */
-final class InvalidValue extends ParseError {
+final class Invalid extends ParseError {
   /** source of invalid value */
   public Arg|Flag $src;
   /** invalid value given */

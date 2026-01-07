@@ -21,16 +21,21 @@ final class HelpError extends \Exception {
   /** @var array<string> path requested for help */
   public array $path;
   /** label help as resolved (should not count as error) */
-  public bool $resolved;
+  public ?int $exitcode;
 
   /**
    * @param array<string> $path
    */
-  function __construct(Context $ctx, array $path) {
-    parent::__construct("help requested");
-    $this->ctx  = $ctx;
-    $this->path = $path;
-    $this->resolved = false;
+  function __construct(
+    Context $ctx,
+    array   $path,
+    ?string $reason   = null,
+    ?int    $exitcode = null,
+  ) {
+    parent::__construct($reason ?? 'help requested');
+    $this->ctx      = $ctx;
+    $this->path     = $path;
+    $this->exitcode = $exitcode;
   }
 }
 ?>

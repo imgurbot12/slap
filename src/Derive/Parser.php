@@ -26,6 +26,8 @@ use Imgurbot12\Slap\Flags\BoolFlag;
 use Imgurbot12\Slap\Flags\IntFlag;
 use Imgurbot12\Slap\Flags\StrFlag;
 
+const RE_TYPEHINT = '/@var\s+(array<(?:string|int|bool)>|\w+)/';
+
 const ARG_TYPES = [
   'string' => Str::class,
   'bool'   => Boolean::class,
@@ -44,13 +46,14 @@ const FLAG_TYPES = [
 function get_doc(\ReflectionClass|\ReflectionProperty &$ref): ?string {
   $about = $ref->getDocComment();
   if ($about === false) return null;
-  return trim($about, "/* \r\n\t\0");
+  $r_about = preg_replace(RE_TYPEHINT, '', $about);
+  return trim($r_about ?? $about, "/* \r\n\t\0");
 }
 
 /**
  * Retrieve Required Status and Named Type Associated with Reflection Property
  *
- * @return array{bool, string}
+ * @return array{bool, bool, string}
  */
 function get_type(string $class, \ReflectionProperty &$ref): array {
   $type = $ref->getType();
@@ -58,7 +61,20 @@ function get_type(string $class, \ReflectionProperty &$ref): array {
   if (!($type instanceof \ReflectionNamedType)) {
     throw new InvalidType($class, $ref->getName(), strval($type));
   }
-  return [!$type->allowsNull(), $type->getName()];
+
+  $name = $type->getName();
+  $doc  = $ref->getDocComment();
+  if ($doc === false) $doc = '';
+  preg_match(RE_TYPEHINT, $doc, $matches);
+  if (!empty($matches)) $name = $matches[1];
+
+  $repeated = false;
+  if (str_starts_with($name, 'array')) {
+    $repeated = true;
+    $name     = trim(substr($name, 5), '<>');
+    if ($name === '') $name = 'string';
+  }
+  return [!$type->allowsNull(), $repeated, $name];
 }
 
 /**
@@ -107,7 +123,8 @@ class Parser {
       $name     = $prop->getName();
       $default  = $prop->getDefaultValue();
       $attrs    = render_attrs($prop->getAttributes());
-      [$required, $type] = get_type($class, $prop);
+      [$required, $repeated, $type] = get_type($class, $prop);
+      $required = ($default === null) && $required;
       $about    = get_doc($prop);
 
       if (is_subclass_of($type, SubCommands::class, true)) {
@@ -118,7 +135,9 @@ class Parser {
         $subcommands = [];
         foreach ($c_ref->getProperties() as &$c_prop) {
           /** @var class-string $type */
-          [,$type] = get_type($class, $c_prop);
+          [,$repeat,$type] = get_type($class, $c_prop);
+          if ($repeat) throw new InvalidType($class, $ref->getName(), $name);
+
           [$subcommand, $submap] = static::build($type);
           $subcommand->name  = $c_prop->getName();
           $subcommand->about = get_doc($c_prop) ?? $subcommand->about;
@@ -126,6 +145,7 @@ class Parser {
           $map->command_map[$c_prop->getName()] = $submap;
         }
         $command->subcommands(...$subcommands);
+        $command->subcommand_required($required);
         continue;
       }
 
@@ -140,12 +160,14 @@ class Parser {
           long:     $attr->long,
           required: $required,
           default:  $default,
+          repeat:   $repeated,
+          custom:   $attr->custom(),
         ));
         continue 2;
       }
 
       $aclass = ARG_TYPES[$type] ?? null;
-      if ($aclass === null) throw new InvalidType($class, $name, $type);
+      if ($repeated || $aclass === null) throw new InvalidType($class, $name, $type);
       $command->args(new $aclass(
         name:     $name,
         about:    $about,

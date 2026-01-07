@@ -10,6 +10,7 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
+use Imgurbot12\Slap\Validate\Repeated;
 use Imgurbot12\Slap\Validate\Custom;
 use Imgurbot12\Slap\Validate\Validator;
 
@@ -41,10 +42,11 @@ abstract class Flag {
   /** @var array<Custom> custom validators for the flag */
   public array $custom;
   /** internal validator implementation */
-  public readonly Validator $validator;
+  public Validator $validator;
 
   /**
-   * @param ?T $default
+   * @param ?T            $default
+   * @param array<Custom> $custom
    */
   function __construct(
     string  $name,
@@ -53,6 +55,8 @@ abstract class Flag {
     ?string $long     = null,
     bool    $required = false,
     mixed   $default  = null,
+    bool    $repeat   = false,
+    ?array  $custom   = null
   ) {
     $this->name      = $name;
     $this->about     = $about ?? '';
@@ -60,8 +64,9 @@ abstract class Flag {
     $this->long      = $long ?? $name;
     $this->required  = $required;
     $this->default   = $default;
-    $this->custom    = [];
+    $this->custom    = $custom ?? [];
     $this->validator = $this->validator();
+    $this->repeat($repeat);
   }
 
   /**
@@ -138,6 +143,20 @@ abstract class Flag {
    */
   function default($default): self {
     $this->default = $default;
+    return $this;
+  }
+
+  /**
+   * Modify Repeated Setting of Flag
+   */
+  function repeat(bool $repeat): self {
+    $this->repeat = $repeat;
+    if (!$this->repeat && $this->validator instanceof Repeated) {
+      $this->validator = $this->validator->inner;
+    }
+    if ($this->repeat && !($this->validator instanceof Repeated)) {
+      $this->validator = new Repeated($this->validator);
+    }
     return $this;
   }
 

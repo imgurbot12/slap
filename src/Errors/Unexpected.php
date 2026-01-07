@@ -16,7 +16,7 @@ use Imgurbot12\Slap\Errors\ParseError;
 /**
  *
  */
-final class UnexpectedArg extends ParseError {
+final class Unexpected extends ParseError {
   /** invalid value given */
   public mixed $value;
 
