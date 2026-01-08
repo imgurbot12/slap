@@ -80,6 +80,7 @@ final class Help {
     foreach ($err->path as $path) {
       $match = array_filter($command->commands,
         fn (Command $sc) => in_array($path, $sc->__names()));
+      $match = array_values($match);
       if (empty($match)) return $this->err_help($err->ctx, $path);
       $command  = $match[0];
       $err->ctx = $err->ctx->stack($command);
