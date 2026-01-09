@@ -15,5 +15,16 @@ namespace Imgurbot12\Slap\Derive;
  *
  * @api
  */
-class SubCommands {}
+class SubCommands {
+
+  /**
+   * Retrieve First Non Null Command from Self
+   */
+  public function get(): mixed {
+    foreach ($this as $key => $value) {
+      if ($value !== null) return $value;
+    }
+    throw new \Exception('no command set');
+  }
+}
 ?>
