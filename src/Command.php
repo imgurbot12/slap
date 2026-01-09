@@ -111,13 +111,14 @@ final class Command {
   protected function check_duplicate_flags(): void {
     $reserved = [];
     foreach ($this->flags as &$flag) {
-      if (in_array($flag->short, $reserved)) {
+      if ($flag->short !== null && in_array($flag->short, $reserved)) {
         throw new \Exception("$this->name has duplicate flag '-$flag->short'");
       }
       if (in_array($flag->long, $reserved)) {
         throw new \Exception("$this->name has duplicate flag '--$flag->long'");
       }
-      array_push($reserved, $flag->short, $flag->long);
+      $reserved[] = $flag->long;
+      if ($flag->short !== null) $reserved[] = $flag->short;
     }
   }
 

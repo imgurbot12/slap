@@ -38,19 +38,21 @@ abstract class Arg {
   readonly public Validator $validator;
 
   /**
-   * @param ?T $default
+   * @param ?T            $default
+   * @param array<Custom> $custom
    */
   function __construct(
     string  $name,
     ?string $about = null,
     mixed   $default = null,
-    bool    $required = true
+    bool    $required = true,
+    ?array  $custom   = null
   ) {
     $this->name      = $name;
     $this->about     = $about ?? '';
     $this->required  = ($default !== null) || $required;
     $this->default   = $default;
-    $this->custom    = [];
+    $this->custom    = $custom ?? [];
     $this->validator = $this->validator();
   }
 

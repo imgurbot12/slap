@@ -149,21 +149,28 @@ class Parser {
         continue;
       }
 
+      $custom = null;
       foreach ($attrs as &$attr) {
-        if (!($attr instanceof Flag)) continue;
-        $fclass = FLAG_TYPES[$type] ?? null;
-        if ($fclass === null) throw new InvalidType($class, $name, $type);
-        $command->flags(new $fclass(
-          name:     $name,
-          about:    $about,
-          short:    $attr->short,
-          long:     $attr->long,
-          required: $required,
-          default:  $default,
-          repeat:   $repeated,
-          custom:   $attr->custom(),
-        ));
-        continue 2;
+        if ($attr instanceof Arg) {
+          $custom = $attr->custom();
+          break;
+        }
+        if ($attr instanceof Flag) {
+          $fclass = FLAG_TYPES[$type] ?? null;
+          if ($fclass === null) throw new InvalidType($class, $name, $type);
+          $attr->long ??= str_replace('_', '-', $name);
+          $command->flags(new $fclass(
+            name:     $name,
+            about:    $about,
+            short:    $attr->short,
+            long:     $attr->long,
+            required: $required,
+            default:  $default,
+            repeat:   $repeated,
+            custom:   $attr->custom(),
+          ));
+          continue 2;
+        }
       }
 
       $aclass = ARG_TYPES[$type] ?? null;
@@ -173,6 +180,7 @@ class Parser {
         about:    $about,
         required: $required,
         default:  $default,
+        custom:   $custom,
       ));
     }
     return [$command, $map];
