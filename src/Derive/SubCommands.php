@@ -21,7 +21,7 @@ class SubCommands {
    * Retrieve First Non Null Command from Self
    */
   public function get(): mixed {
-    foreach ($this as $key => $value) {
+    foreach (get_object_vars($this) as $key => $value) {
       if ($value !== null) return $value;
     }
     throw new \Exception('no command set');

@@ -33,7 +33,7 @@ final class ParserMap {
     $this->command_map   = [];
   }
 
-  private function set(mixed &$class, string $key, mixed $value): void {
+  private function set(object &$class, string $key, mixed $value): void {
     if (property_exists($class, $key)) $class->{$key} = $value;
   }
 

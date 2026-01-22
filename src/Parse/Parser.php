@@ -46,7 +46,7 @@ final class Parser {
    *
    * @param Arg $arg
    */
-  function validate_arg(Arg &$arg, Context &$ctx, mixed $value): mixed {
+  function validate_arg(Arg &$arg, Context &$ctx, string $value): mixed {
     if ($value === '<__missing>') {
       if ($arg->required === true) {
         $ctx->is_missing($arg);
@@ -69,8 +69,11 @@ final class Parser {
    * Validate and Finalize Flag Value for Parsing Result
    *
    * @param Flag $flag
+   * @param (null|string)[]|null|string $value
+   *
+   * @psalm-param array<null|string>|null|string $value
    */
-  function validate_flag(Flag &$flag, Context &$ctx, mixed $value): mixed {
+  function validate_flag(Flag &$flag, Context &$ctx, array|string|null $value): mixed {
     if ($value === '<__missing>') {
       if ($flag->required === true) {
         $ctx->is_missing($flag);

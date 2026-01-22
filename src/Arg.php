@@ -43,8 +43,8 @@ abstract class Arg {
    */
   function __construct(
     string  $name,
-    ?string $about = null,
-    mixed   $default = null,
+    ?string $about    = null,
+    mixed   $default  = null,
     bool    $required = true,
     ?array  $custom   = null
   ) {
@@ -96,7 +96,8 @@ abstract class Arg {
    * @param ?T $default
    */
   function default($default): self {
-    $this->default = $default;
+    $this->required = false;
+    $this->default  = $default;
     return $this;
   }
 

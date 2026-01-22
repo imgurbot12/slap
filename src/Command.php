@@ -10,12 +10,8 @@
 declare(strict_types=1);
 namespace Imgurbot12\Slap;
 
-//TODO: complete help pages
-//TODO: builtin --help flag
-//TODO: builtin help subcommand
 //TODO: options to enable/disable builtin help features
 //TODO: real world tests and better unit-tests
-//TODO: dataclass/attribute parser implementations
 
 use Imgurbot12\Slap\Arg;
 use Imgurbot12\Slap\Flag;
@@ -202,6 +198,28 @@ final class Command {
   function subcommand_required(bool $required): self {
     $this->subcommand_required = $required;
     return $this;
+  }
+
+  /**
+   * Parse args and run command without any automated output or error handling
+   *
+   * @param  ?array<string> $args  arguments to parse
+   * @param  ?Help          $help  help page builder
+   * @return array<string, mixed>
+   */
+  function run(
+    ?array $args = null,
+    ?Help  $help = null,
+  ): array {
+    global $argv;
+    if ($args === null && php_sapi_name() !== "cli") {
+      throw new \Exception('PHP is not running as a CLI application');
+    }
+    $args   ??= array_slice($argv, 1);
+    $help   ??= new Help();
+
+    $parser = new Parser($help, $this);
+    return $parser->parse($args);
   }
 
   /**

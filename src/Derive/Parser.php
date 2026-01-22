@@ -25,6 +25,7 @@ use Imgurbot12\Slap\Command as CommandBuilder;
 use Imgurbot12\Slap\Flags\BoolFlag;
 use Imgurbot12\Slap\Flags\IntFlag;
 use Imgurbot12\Slap\Flags\StrFlag;
+use Imgurbot12\Slap\Help;
 
 const RE_TYPEHINT = '/@var\s+(array<(?:string|int|bool)>|\w+)/';
 
@@ -187,21 +188,55 @@ class Parser {
   }
 
   /**
-   * Try to Parse the Specified Arguments or Return ExitCode on Fail
+   * Parse args and run command without any automated output or error handling
+   *
+   * @param  ?array<string> $args  arguments to parse
+   * @param  ?Help          $help  help page builder
+   * @return static
    */
-  static function try_parse(): static|int {
+  static function run(
+    ?array $args   = null,
+    ?Help  $help   = null,
+  ): static|int {
     [$command, $map] = static::build(static::class);
-    $result = $command->try_parse();
+    $result = $command->run($args, $help);
+    return $map->apply($result);
+  }
+
+  /**
+   * Try to Parse the Specified Arguments or Return ExitCode on Fail
+   *
+   * @param  ?array<string> $args    arguments to parse
+   * @param  ?Help          $help    help page builder
+   * @param  ?resource      $stderr  file resource to write error messages to
+   * @return static
+   */
+  static function try_parse(
+    ?array $args   = null,
+    ?Help  $help   = null,
+    mixed  $stderr = null,
+  ): static|int {
+    [$command, $map] = static::build(static::class);
+    $result = $command->try_parse($args, $help, $stderr);
     if (is_int($result)) return $result;
     return $map->apply($result);
   }
 
   /**
    * Parse the Specified Arguments or Exit on Failure
+   *
+   * @param  ?array<string> $args    arguments to parse
+   * @param  ?Help          $help    help page builder
+   * @param  ?resource      $stderr  file resource to write error messages to
+   * @return static
    */
-  static function parse(): static {
+  static function parse(
+    ?array $args   = null,
+    ?Help  $help   = null,
+    mixed  $stderr = null,
+  ): static {
     [$command, $map] = static::build(static::class);
-    $result = $command->parse();
+    $result = $command->parse($args, $help, $stderr);
     return $map->apply($result);
   }
 }
